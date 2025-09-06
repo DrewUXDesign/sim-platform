@@ -25,6 +25,121 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Smooth drag and drop optimizations */
+.dragging {
+  cursor: grabbing !important;
+}
+
+.drag-overlay {
+  pointer-events: none;
+}
+
+/* Disable text selection during drag */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Performance optimizations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Disable transitions on elements being dragged */
+[data-dragging="true"] {
+  transition: none !important;
+}
+
+/* Smooth drop zone highlighting */
+.drop-zone-active {
+  animation: pulse-border 1s infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: rgb(34 197 94);
+    background-color: rgb(240 253 244);
+  }
+  50% {
+    border-color: rgb(74 222 128);
+    background-color: rgb(247 254 249);
+  }
+}
+
+/* Optimize canvas for smooth dragging */
+.platform-canvas {
+  contain: layout style paint;
+  will-change: contents;
+}
+
+.platform-node {
+  contain: layout style;
+  transform: translateZ(0);
+  will-change: transform, left, top;
+}
+
+/* Smooth node transitions when not dragging */
+.platform-node:not(.dragging) {
+  transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              top 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s ease-out;
+}
+
+/* Custom slider styles for zoom control */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: #2563eb;
+}
+
+.slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  background: #2563eb;
+}
+
+/* Zoom canvas styles */
+.zoom-canvas {
+  touch-action: none;
+  user-select: none;
+}
+
+/* Resize handle styles */
+.resize-handle {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.resizable-selected .resize-handle {
+  opacity: 1;
+}
+
 /* Custom Animations */
 @keyframes float {
   0%, 100% { 

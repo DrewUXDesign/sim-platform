@@ -278,9 +278,9 @@ export class SimulationEngine {
       case CheckpointType.ENGINEERING_REVIEW:
         return component.metrics.performance > 70 && component.metrics.reliability > 70;
       case CheckpointType.COMPLIANCE_CHECK:
-        return component.config.security?.encryption && component.config.security?.authorization;
+        return (component.config.security?.encryption || false) && (component.config.security?.authorization || false);
       case CheckpointType.RELIABILITY_TEST:
-        return component.config.reliability?.healthChecks && component.config.reliability?.monitoring;
+        return (component.config.reliability?.healthChecks || false) && (component.config.reliability?.monitoring || false);
       default:
         return Math.random() > 0.3; // 70% pass rate for other checkpoints
     }
