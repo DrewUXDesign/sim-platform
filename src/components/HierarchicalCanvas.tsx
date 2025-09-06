@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { usePlatform } from '@/hooks/use-platform';
-import { ComponentLayer } from '@/types/platform';
+import { ComponentLayer, PlatformNode as PlatformNodeType } from '@/types/platform';
 import PlatformNode from './PlatformNode';
 import ResizableNode from './ResizableNode';
 import ZoomableCanvas from './ZoomableCanvas';
@@ -12,6 +12,64 @@ import { useCanvasZoom } from '@/hooks/use-canvas-zoom';
 interface HierarchicalCanvasProps {
   dragOverNodeId?: string | null;
 }
+
+interface MemoizedNodeWrapperProps {
+  nodeId: string;
+  node: PlatformNodeType;
+  childIds: string[];
+  isSelected: boolean;
+  isHovered: boolean;
+  canAcceptDrop: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+  onHover: (hovering: boolean) => void;
+  onResize: (id: string, size: { width: number; height: number }) => void;
+  renderNode: (nodeId: string) => React.ReactNode;
+}
+
+const MemoizedNodeWrapper = React.memo<MemoizedNodeWrapperProps>(({
+  nodeId,
+  node,
+  childIds,
+  isSelected,
+  isHovered,
+  canAcceptDrop,
+  onSelect,
+  onDelete,
+  onHover,
+  onResize,
+  renderNode
+}) => {
+  return (
+    <ResizableNode
+      node={node}
+      isSelected={isSelected}
+      onResize={onResize}
+    >
+      <PlatformNode
+        node={node}
+        isSelected={isSelected}
+        isHovered={isHovered}
+        canAcceptDrop={canAcceptDrop}
+        onSelect={onSelect}
+        onDelete={onDelete}
+        onHover={onHover}
+      >
+        {childIds.map(childId => renderNode(childId))}
+      </PlatformNode>
+    </ResizableNode>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison for better performance
+  return (
+    prevProps.node === nextProps.node &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isHovered === nextProps.isHovered &&
+    prevProps.canAcceptDrop === nextProps.canAcceptDrop &&
+    prevProps.childIds.length === nextProps.childIds.length &&
+    prevProps.childIds.every((id, index) => id === nextProps.childIds[index])
+  );
+});
 
 export default function HierarchicalCanvas({ dragOverNodeId }: HierarchicalCanvasProps) {
   const {
@@ -35,42 +93,47 @@ export default function HierarchicalCanvas({ dragOverNodeId }: HierarchicalCanva
   });
   
   
+  // Memoize node children to prevent recalculation
+  const nodeChildrenMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    Array.from(nodes.values()).forEach(node => {
+      map.set(node.id, node.childIds);
+    });
+    return map;
+  }, [nodes]);
+
   const renderNode = useCallback((nodeId: string): React.ReactNode => {
     const node = nodes.get(nodeId);
     if (!node) return null;
     
-    const children = getNodeChildren(nodeId);
+    const childIds = nodeChildrenMap.get(nodeId) || [];
     const canAccept = draggedNodeType ? canAcceptNode(nodeId, draggedNodeType) : false;
     
     return (
-      <ResizableNode
+      <MemoizedNodeWrapper
         key={node.id}
+        nodeId={nodeId}
         node={node}
+        childIds={childIds}
         isSelected={selectedNodeId === node.id}
+        isHovered={hoveredNodeId === node.id}
+        canAcceptDrop={dragOverNodeId === node.id || (canAccept && isOver)}
+        onSelect={() => selectNode(node.id)}
+        onDelete={() => deleteNode(node.id)}
+        onHover={(hovering) => setHoveredNode(hovering ? node.id : null)}
         onResize={(id, size) => updateNode(id, { size })}
-      >
-        <PlatformNode
-          node={node}
-          isSelected={selectedNodeId === node.id}
-          isHovered={hoveredNodeId === node.id}
-          canAcceptDrop={dragOverNodeId === node.id || (canAccept && isOver)}
-          onSelect={() => selectNode(node.id)}
-          onDelete={() => deleteNode(node.id)}
-          onHover={(hovering) => setHoveredNode(hovering ? node.id : null)}
-        >
-          {children.map(child => renderNode(child.id))}
-        </PlatformNode>
-      </ResizableNode>
+        renderNode={renderNode}
+      />
     );
   }, [
     nodes,
+    nodeChildrenMap,
     selectedNodeId,
     hoveredNodeId,
     dragOverNodeId,
     draggedNodeType,
     isOver,
     canAcceptNode,
-    getNodeChildren,
     selectNode,
     deleteNode,
     setHoveredNode,

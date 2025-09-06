@@ -16,7 +16,7 @@ interface ResizableNodeProps {
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
-export default function ResizableNode({
+const ResizableNode = React.memo<ResizableNodeProps>(({
   node,
   isSelected,
   onResize,
@@ -50,49 +50,52 @@ export default function ResizableNode({
     const handleMouseMove = (e: MouseEvent) => {
       if (!resizeHandle) return;
       
-      const deltaX = e.clientX - startPos.x;
-      const deltaY = e.clientY - startPos.y;
-      
-      let newWidth = startSize.width;
-      let newHeight = startSize.height;
-      
-      // Calculate new dimensions based on handle
-      switch (resizeHandle) {
-        case 'e':
-          newWidth = startSize.width + deltaX;
-          break;
-        case 'w':
-          newWidth = startSize.width - deltaX;
-          break;
-        case 's':
-          newHeight = startSize.height + deltaY;
-          break;
-        case 'n':
-          newHeight = startSize.height - deltaY;
-          break;
-        case 'se':
-          newWidth = startSize.width + deltaX;
-          newHeight = startSize.height + deltaY;
-          break;
-        case 'sw':
-          newWidth = startSize.width - deltaX;
-          newHeight = startSize.height + deltaY;
-          break;
-        case 'ne':
-          newWidth = startSize.width + deltaX;
-          newHeight = startSize.height - deltaY;
-          break;
-        case 'nw':
-          newWidth = startSize.width - deltaX;
-          newHeight = startSize.height - deltaY;
-          break;
-      }
-      
-      // Apply constraints
-      newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-      newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
-      
-      onResize(node.id, { width: newWidth, height: newHeight });
+      // Use requestAnimationFrame to throttle resize updates for better performance
+      requestAnimationFrame(() => {
+        const deltaX = e.clientX - startPos.x;
+        const deltaY = e.clientY - startPos.y;
+        
+        let newWidth = startSize.width;
+        let newHeight = startSize.height;
+        
+        // Calculate new dimensions based on handle
+        switch (resizeHandle) {
+          case 'e':
+            newWidth = startSize.width + deltaX;
+            break;
+          case 'w':
+            newWidth = startSize.width - deltaX;
+            break;
+          case 's':
+            newHeight = startSize.height + deltaY;
+            break;
+          case 'n':
+            newHeight = startSize.height - deltaY;
+            break;
+          case 'se':
+            newWidth = startSize.width + deltaX;
+            newHeight = startSize.height + deltaY;
+            break;
+          case 'sw':
+            newWidth = startSize.width - deltaX;
+            newHeight = startSize.height + deltaY;
+            break;
+          case 'ne':
+            newWidth = startSize.width + deltaX;
+            newHeight = startSize.height - deltaY;
+            break;
+          case 'nw':
+            newWidth = startSize.width - deltaX;
+            newHeight = startSize.height - deltaY;
+            break;
+        }
+        
+        // Apply constraints
+        newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+        newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+        
+        onResize(node.id, { width: newWidth, height: newHeight });
+      });
     };
     
     const handleMouseUp = () => {
@@ -151,4 +154,15 @@ export default function ResizableNode({
       )}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison for better performance
+  return (
+    prevProps.node.id === nextProps.node.id &&
+    prevProps.node.size?.width === nextProps.node.size?.width &&
+    prevProps.node.size?.height === nextProps.node.size?.height &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.node.type === nextProps.node.type
+  );
+});
+
+export default ResizableNode;

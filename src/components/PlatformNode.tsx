@@ -25,7 +25,7 @@ interface PlatformNodeProps {
   children?: React.ReactNode;
 }
 
-export default function PlatformNode({
+const PlatformNode = React.memo<PlatformNodeProps>(({
   node,
   isSelected,
   isHovered,
@@ -34,7 +34,7 @@ export default function PlatformNode({
   onDelete,
   onHover,
   children
-}: PlatformNodeProps) {
+}) => {
   const template = getNodeTemplate(node.type);
   const Icon = iconMap[template?.icon || 'Settings'];
   
@@ -177,7 +177,23 @@ export default function PlatformNode({
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison to prevent unnecessary re-renders
+  return (
+    prevProps.node.id === nextProps.node.id &&
+    prevProps.node.position.x === nextProps.node.position.x &&
+    prevProps.node.position.y === nextProps.node.position.y &&
+    prevProps.node.size?.width === nextProps.node.size?.width &&
+    prevProps.node.size?.height === nextProps.node.size?.height &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isHovered === nextProps.isHovered &&
+    prevProps.canAcceptDrop === nextProps.canAcceptDrop &&
+    prevProps.node.status.health === nextProps.node.status.health &&
+    prevProps.node.status.utilization === nextProps.node.status.utilization
+  );
+});
+
+export default PlatformNode;
 
 function getLayerZIndex(layer: ComponentLayer): number {
   const zIndexMap = {

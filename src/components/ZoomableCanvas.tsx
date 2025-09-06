@@ -26,31 +26,34 @@ export default function ZoomableCanvas({ children, className = '' }: ZoomableCan
     stopPanning
   } = useCanvasZoom();
   
-  // Handle wheel zoom
+  // Handle wheel zoom with throttling
   const handleWheel = useCallback((e: WheelEvent) => {
     if (!containerRef.current) return;
     
     // Prevent default scrolling
     e.preventDefault();
     
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Calculate zoom
-    const delta = e.deltaY * -0.001;
-    const scaleFactor = e.ctrlKey ? 0.5 : 1; // Fine zoom with Ctrl
-    const newZoom = Math.max(0.25, Math.min(3, zoom + delta * scaleFactor));
-    
-    // Calculate new pan offset to zoom towards cursor
-    if (newZoom !== zoom) {
-      const zoomRatio = newZoom / zoom;
-      const newPanX = x - (x - panOffset.x) * zoomRatio;
-      const newPanY = y - (y - panOffset.y) * zoomRatio;
+    // Use requestAnimationFrame to throttle zoom updates
+    requestAnimationFrame(() => {
+      const rect = containerRef.current!.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
       
-      setPanOffset({ x: newPanX, y: newPanY });
-      setZoom(newZoom);
-    }
+      // Calculate zoom
+      const delta = e.deltaY * -0.001;
+      const scaleFactor = e.ctrlKey ? 0.5 : 1; // Fine zoom with Ctrl
+      const newZoom = Math.max(0.25, Math.min(3, zoom + delta * scaleFactor));
+      
+      // Calculate new pan offset to zoom towards cursor
+      if (newZoom !== zoom) {
+        const zoomRatio = newZoom / zoom;
+        const newPanX = x - (x - panOffset.x) * zoomRatio;
+        const newPanY = y - (y - panOffset.y) * zoomRatio;
+        
+        setPanOffset({ x: newPanX, y: newPanY });
+        setZoom(newZoom);
+      }
+    });
   }, [zoom, panOffset, setZoom, setPanOffset]);
   
   // Handle pan with space + drag or middle mouse
@@ -67,12 +70,15 @@ export default function ZoomableCanvas({ children, className = '' }: ZoomableCan
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     
-    const deltaX = e.clientX - dragStart.x;
-    const deltaY = e.clientY - dragStart.y;
-    
-    setPanOffset({
-      x: lastPanOffset.x + deltaX,
-      y: lastPanOffset.y + deltaY
+    // Use requestAnimationFrame for smoother updates
+    requestAnimationFrame(() => {
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+      
+      setPanOffset({
+        x: lastPanOffset.x + deltaX,
+        y: lastPanOffset.y + deltaY
+      });
     });
   }, [isDragging, dragStart, lastPanOffset, setPanOffset]);
   
