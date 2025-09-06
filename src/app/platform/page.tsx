@@ -37,10 +37,17 @@ export default function PlatformPage() {
   
   // Auto-add components during tutorial
   const addTutorialComponent = React.useCallback((stepId: string) => {
+    console.log('addTutorialComponent called with stepId:', stepId);
+    
     const rootNodes = Array.from(nodes.values()).filter(node => !node.parentId);
     const regionNode = rootNodes.find(node => node.type === InfrastructureType.REGION);
     
-    if (!regionNode) return;
+    console.log('RegionNode found:', regionNode?.id, regionNode?.name);
+    
+    if (!regionNode) {
+      console.log('No region node found, skipping tutorial action');
+      return;
+    }
     
     switch (stepId) {
       case 'add-availability-zone':
@@ -122,6 +129,19 @@ export default function PlatformPage() {
       });
     }
   }, []);
+
+  // Execute tutorial actions when steps change
+  React.useEffect(() => {
+    if (isGuidedMode && currentStep < steps.length) {
+      const currentStepData = steps[currentStep];
+      console.log('Tutorial step changed to:', currentStepData.id);
+      
+      // Add a small delay to let UI update first
+      setTimeout(() => {
+        addTutorialComponent(currentStepData.id);
+      }, 500);
+    }
+  }, [currentStep, isGuidedMode, steps, addTutorialComponent]);
   
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -161,6 +181,14 @@ export default function PlatformPage() {
   
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over, delta } = event;
+    
+    // Debug logging
+    console.log('Drag End:', {
+      activeId: active.id,
+      overId: over?.id,
+      activeData: active.data.current,
+      overData: over?.data.current
+    });
     
     setActiveId(null);
     setActiveNode(null);
@@ -235,6 +263,14 @@ export default function PlatformPage() {
         };
       }
     }
+    
+    console.log('Adding node:', {
+      type: nodeType,
+      name: template.name,
+      position,
+      size: template.defaultSize,
+      parentId
+    });
     
     addNode({
       type: nodeType,
@@ -337,7 +373,7 @@ export default function PlatformPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Component Palette */}
         {showLeftPanel && (
-          <div className="w-48 lg:w-56 h-full bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
+          <div className="w-52 lg:w-56 h-full bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
             <LayeredPalette />
           </div>
         )}
@@ -349,7 +385,7 @@ export default function PlatformPage() {
         
         {/* Metrics Dashboard */}
         {showRightPanel && (
-          <div className="w-48 lg:w-56 h-full bg-white border-l border-gray-200 flex-shrink-0 overflow-y-auto">
+          <div className="w-52 lg:w-56 h-full bg-white border-l border-gray-200 flex-shrink-0 overflow-y-auto">
             <ResourceMetrics />
           </div>
         )}

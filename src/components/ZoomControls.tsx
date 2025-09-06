@@ -42,7 +42,7 @@ export default function ZoomControls() {
             className={`p-2 rounded hover:bg-gray-100 transition-colors ${
               isPanning ? 'bg-blue-100 text-blue-600' : 'text-gray-600'
             }`}
-            title="Pan canvas (hold Space)"
+            title="Pan canvas (middle mouse)"
           >
             <Move className="w-4 h-4" />
           </button>
@@ -117,7 +117,7 @@ export default function ZoomControls() {
       {/* Keyboard Shortcuts Hint */}
       <div className="mt-2 text-xs text-gray-500 text-right">
         <div>Scroll: Zoom</div>
-        <div>Space + Drag: Pan</div>
+        <div>Middle Mouse: Pan</div>
         <div>Ctrl + Scroll: Fine zoom</div>
       </div>
     </div>

@@ -16,7 +16,7 @@ interface ResizableNodeProps {
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
-const ResizableNode = React.memo<ResizableNodeProps>(({
+export default function ResizableNode({
   node,
   isSelected,
   onResize,
@@ -154,15 +154,4 @@ const ResizableNode = React.memo<ResizableNodeProps>(({
       )}
     </div>
   );
-}, (prevProps, nextProps) => {
-  // Custom comparison for better performance
-  return (
-    prevProps.node.id === nextProps.node.id &&
-    prevProps.node.size?.width === nextProps.node.size?.width &&
-    prevProps.node.size?.height === nextProps.node.size?.height &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.node.type === nextProps.node.type
-  );
-});
-
-export default ResizableNode;
+}

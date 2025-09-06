@@ -56,9 +56,10 @@ export default function ZoomableCanvas({ children, className = '' }: ZoomableCan
     });
   }, [zoom, panOffset, setZoom, setPanOffset]);
   
-  // Handle pan with space + drag or middle mouse
+  // Handle pan with middle mouse only (avoid conflicts with drag and drop)
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && (e.shiftKey || isPanning))) {
+    // Only handle middle mouse button to avoid interfering with drag and drop
+    if (e.button === 1) {
       e.preventDefault();
       setIsDragging(true);
       setDragStart({ x: e.clientX, y: e.clientY });
@@ -89,12 +90,7 @@ export default function ZoomableCanvas({ children, className = '' }: ZoomableCan
   
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.code === 'Space' && !isPanning) {
-      e.preventDefault();
-      startPanning();
-    }
-    
-    // Zoom shortcuts
+    // Zoom shortcuts only
     if (e.ctrlKey || e.metaKey) {
       if (e.key === '=' || e.key === '+') {
         e.preventDefault();
@@ -108,13 +104,7 @@ export default function ZoomableCanvas({ children, className = '' }: ZoomableCan
         setPanOffset({ x: 0, y: 0 });
       }
     }
-  }, [zoom, isPanning, setZoom, setPanOffset, startPanning]);
-  
-  const handleKeyUp = useCallback((e: KeyboardEvent) => {
-    if (e.code === 'Space' && isPanning && !isDragging) {
-      stopPanning();
-    }
-  }, [isPanning, isDragging, stopPanning]);
+  }, [zoom, setZoom, setPanOffset]);
   
   // Set up event listeners
   useEffect(() => {
@@ -125,24 +115,31 @@ export default function ZoomableCanvas({ children, className = '' }: ZoomableCan
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
     
     return () => {
       container.removeEventListener('wheel', handleWheel);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleWheel, handleMouseMove, handleMouseUp, handleKeyDown, handleKeyUp]);
+  }, [handleWheel, handleMouseMove, handleMouseUp, handleKeyDown]);
   
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-visible ${className} ${
+      className={`relative overflow-hidden ${className} ${
         isPanning ? 'cursor-move' : ''
       } ${isDragging ? 'cursor-grabbing' : ''}`}
       onMouseDown={handleMouseDown}
+      style={{
+        backgroundImage: `
+          linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)
+        `,
+        backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+        backgroundPosition: `${panOffset.x % (20 * zoom)}px ${panOffset.y % (20 * zoom)}px`,
+        pointerEvents: isDragging ? 'none' : 'auto'
+      }}
     >
       {/* Zoomable content */}
       <div
@@ -162,7 +159,7 @@ export default function ZoomableCanvas({ children, className = '' }: ZoomableCan
       {/* Pan indicator */}
       {isPanning && !isDragging && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm z-50">
-          Pan Mode (Hold Space)
+          Pan Mode (Middle Mouse)
         </div>
       )}
     </div>

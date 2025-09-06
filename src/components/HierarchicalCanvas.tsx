@@ -92,6 +92,8 @@ export default function HierarchicalCanvas({ dragOverNodeId }: HierarchicalCanva
     data: { accepts: ComponentLayer.INFRASTRUCTURE }
   });
   
+  console.log('Canvas droppable isOver:', isOver);
+  
   
   // Memoize node children to prevent recalculation
   const nodeChildrenMap = useMemo(() => {
@@ -144,28 +146,19 @@ export default function HierarchicalCanvas({ dragOverNodeId }: HierarchicalCanva
   const rootNodes = Array.from(nodes.values()).filter(node => !node.parentId);
   
   return (
-    <div className="w-full h-full bg-gray-50 rounded-lg">
+    <div 
+      ref={setNodeRef}
+      id="canvas"
+      className="w-full h-full bg-gray-50 rounded-lg"
+    >
       <ZoomableCanvas className="w-full h-full">
         <div
-          ref={setNodeRef}
-          id="canvas"
           className="relative platform-canvas gpu-accelerated"
           style={{ 
-            width: '1200px',
-            height: '800px'
+            width: '1000px',
+            height: '600px'
           }}
         >
-        {/* Grid background */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, #000 1px, transparent 1px),
-              linear-gradient(to bottom, #000 1px, transparent 1px)
-            `,
-            backgroundSize: '20px 20px'
-          }}
-        />
         
         {/* Empty state */}
         {nodes.size === 0 && (
